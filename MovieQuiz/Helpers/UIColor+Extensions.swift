@@ -1,4 +1,2 @@
 import UIKit
 
-extension UIColor {
-}

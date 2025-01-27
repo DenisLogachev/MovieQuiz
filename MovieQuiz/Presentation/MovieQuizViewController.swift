@@ -73,6 +73,30 @@ final class MovieQuizViewController: UIViewController {
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
     
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        previewImage.layer.cornerRadius = 20
+        previewImage.layer.masksToBounds = true
+        yesButton.layer.cornerRadius = 15
+        yesButton.layer.masksToBounds = true
+        noButton.layer.cornerRadius = 15
+        noButton.layer.masksToBounds = true
+        let firstQuestion = questions[currentQuestionIndex]
+        let viewModel = convert(model: firstQuestion)
+        show(quiz: viewModel)
+    }
+    
+    @IBAction private func yesButtonClicked(_ sender: Any) {
+        let currentQuestion = questions[currentQuestionIndex]
+        let givenAnswer = true
+        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+    }
+    @IBAction private func noButtonClicked(_ sender: Any) {
+        let currentQuestion = questions[currentQuestionIndex]
+        let givenAnswer = false
+        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
+    }
+    
     private func convert(model: QuizQuestion) -> QuizStepViewModel {
         let questionStep = QuizStepViewModel(
             image: UIImage(named: model.image) ?? UIImage(),
@@ -80,7 +104,6 @@ final class MovieQuizViewController: UIViewController {
             questionNumber: "\(currentQuestionIndex + 1)/\(questions.count)")
         return questionStep
     }
-    
     private func show(quiz step: QuizStepViewModel) {
         previewImage.layer.borderWidth = 0
         previewImage.layer.borderColor = nil
@@ -115,8 +138,6 @@ final class MovieQuizViewController: UIViewController {
         }
     }
     
-    
-    
     private func show(quiz result: QuizResultsViewModel) {
         let alert = UIAlertController(
             title: result.title,
@@ -131,35 +152,8 @@ final class MovieQuizViewController: UIViewController {
             let viewModel = self.convert(model: firstQuestion)
             self.show(quiz: viewModel)
         }
-        
         alert.addAction(action)
-        
         self.present(alert, animated: true, completion: nil)
     }
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        previewImage.layer.cornerRadius = 15
-        previewImage.layer.masksToBounds = true
-        yesButton.layer.cornerRadius = 15
-        yesButton.layer.masksToBounds = true
-        noButton.layer.cornerRadius = 15
-        noButton.layer.masksToBounds = true
-        let firstQuestion = questions[currentQuestionIndex]
-        let viewModel = convert(model: firstQuestion)
-        show(quiz: viewModel)
-    }
-    
-    @IBAction private func yesButtonClicked(_ sender: Any) {
-        let currentQuestion = questions[currentQuestionIndex]
-        let givenAnswer = true
-        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-    }
-    @IBAction private func noButtonClicked(_ sender: Any) {
-        let currentQuestion = questions[currentQuestionIndex]
-        let givenAnswer = false
-        showAnswerResult(isCorrect: givenAnswer == currentQuestion.correctAnswer)
-    }
-    
 }
 

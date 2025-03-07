@@ -14,16 +14,19 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private var correctAnswers = 0
     private let questionsAmount: Int = 10
     private let moviesLoader = MoviesLoader()
-    private lazy var questionFactory: QuestionFactoryProtocol = QuestionFactory(moviesLoader: moviesLoader, delegate: self)
+    private lazy var questionFactory: QuestionFactoryProtocol = {
+        let factory = QuestionFactory(moviesLoader: moviesLoader, delegate: self)
+        return factory}()
     private var currentQuestion: QuizQuestion?
     private let alertPresenter = AlertPresenter()
     private lazy var statisticService: StatisticServiceProtocol = StatisticService()
+    private let borderWidth: CGFloat = 8.0
+    private let answerDelay:TimeInterval = 1.0
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
-        questionFactory.setup(delegate: self)
         showLoadingIndicator()
         questionFactory.loadData()
     }
@@ -35,15 +38,17 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         yesButton.layer.masksToBounds = true
         noButton.layer.cornerRadius = 15
         noButton.layer.masksToBounds = true
+        activityIndicator.hidesWhenStopped = true
     }
     // MARK: - QuestionFactoryDelegate
     func didReceiveNextQuestion(question: QuizQuestion?) {
-        guard let question = question else {return}
-        currentQuestion = question
-        let viewModel = convert(model: question, index: currentQuestionIndex + 1)
         DispatchQueue.main.async { [weak self] in
-            self?.show(quiz: viewModel)
-            self?.setAnswerButtonsState(isEnabled: true)
+            guard let self = self, let question = question else {return}
+            self.currentQuestion = question
+            self.currentQuestionIndex += 1
+            let viewModel = self.convert(model: question, index: self.currentQuestionIndex)
+            self.show(quiz: viewModel)
+            self.setAnswerButtonsState(isEnabled: true)
         }
     }
     
@@ -54,9 +59,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     private func convert(model: QuizQuestion, index: Int) -> QuizStepViewModel {
         return QuizStepViewModel(
-             image: model.image ?? UIImage(),
-             question: model.text,
-             questionNumber: "\(index)/\(questionsAmount)")
+            image: model.image ?? UIImage(),
+            question: model.text,
+            questionNumber: "\(index)/\(questionsAmount)")
     }
     
     private func show(quiz step: QuizStepViewModel) {
@@ -68,15 +73,20 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     private func showAnswerResult(isCorrect: Bool) {
-        DispatchQueue.main.async {
-            if isCorrect {
-                self.correctAnswers += 1
-            }
-            self.previewImage.layer.borderWidth = 8
+        DispatchQueue.main.async {[weak self] in
+            guard let self else {return}
+            self.updateAnswerResult(isCorrect: isCorrect)
+            self.previewImage.layer.borderWidth = self.borderWidth
             self.previewImage.layer.borderColor = isCorrect ? UIColor.ypGreen.cgColor : UIColor.ypRed.cgColor
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {[weak self] in
-            self?.showNextQuestionOrResults()
+        DispatchQueue.main.asyncAfter(deadline: .now() + answerDelay) {[weak self] in
+            guard let self else {return}
+            self.showNextQuestionOrResults()
+        }
+    }
+    private func updateAnswerResult(isCorrect: Bool) {
+        if isCorrect {
+            correctAnswers += 1
         }
     }
     
@@ -110,7 +120,6 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         currentQuestionIndex = 0
         correctAnswers = 0
         previewImage.layer.borderWidth = 0
-        //questionFactory.resetQuestions()
         questionFactory.requestNextQuestion()
         setAnswerButtonsState(isEnabled: true)
     }
@@ -135,13 +144,13 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         alertPresenter.showAlert(model: alertModel, in: self)
     }
     private func showLoadingIndicator() {
-        activityIndicator.isHidden = false
-        activityIndicator.startAnimating()
+        DispatchQueue.main.async {[weak self] in
+            self?.activityIndicator.startAnimating()
+        }
     }
     private func showNetworkError(message: String)  {
         DispatchQueue.main.async { [weak self] in
             self?.activityIndicator.stopAnimating()
-            self?.activityIndicator.isHidden = true
         }
         let model = AlertModel(title: "Ошибка",
                                message: message,
@@ -154,16 +163,37 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     func didLoadDataFromServer() {
-    DispatchQueue.main.async { [weak self] in
-        self?.activityIndicator.stopAnimating()
-        self?.activityIndicator.isHidden = true}
+        stopActivityIndicator()
         questionFactory.requestNextQuestion()
     }
-
+    
     func didFailToLoadData(with error: Error) {
-        DispatchQueue.main.async {
-            self.activityIndicator.isHidden = true
-            self.showNetworkError(message: error.localizedDescription) }
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            stopActivityIndicator()
+            let message: String
+            if let urlError = error as? URLError {
+                message = "Проверьте подключение к интернету и попробуйте снова."
+            } else if let movieError = error as? MovieLoadingError {
+                switch movieError {
+                case .networkError:
+                    message = "Ошибка сети. Пожалуйста, попробуйте позже."
+                case .apiError(let errorMessage):
+                    message = "Ошибка сервера: \(errorMessage)"
+                case .emptyMoviesList:
+                    message = "Не удалось загрузить фильмы. Попробуйте позже."
+                }
+            } else {
+                message = "Неизвестная ошибка: \(error.localizedDescription)"
+            }
+            self.showNetworkError(message:message)
+        }
+    }
+    private func stopActivityIndicator() {
+        DispatchQueue.main.async {[weak self] in
+            self?.activityIndicator.stopAnimating()
+            self?.activityIndicator.isHidden = true
+        }
     }
     
     // MARK: - Actions

@@ -10,7 +10,7 @@ struct MoviesLoader: MoviesLoading {
     
     // MARK: - URL
     private var mostPopularMoviesUrl: URL {
-        guard let url = URL(string: "https://tv-api.com/en/API/Top250Movies/k_zcuw1ytf") else {
+        guard let url = URL(string:Constants.apiTopMoviesURL) else {
             preconditionFailure("Unable to construct mostPopularMoviesUrl")
         }
         return url
@@ -22,10 +22,20 @@ struct MoviesLoader: MoviesLoading {
             case .success(let data):
                 do {
                     let mostPopularMovies = try JSONDecoder().decode(MostPopularMovies.self, from: data)
+                    
+                    if let errorMessage = mostPopularMovies.errorMessage, !errorMessage.isEmpty {
+                        handler(.failure(MovieLoadingError.apiError(errorMessage)))
+                        return
+                    } else if mostPopularMovies.items.isEmpty {
+                        handler(.failure(MovieLoadingError.emptyMoviesList))
+                        return
+                    }
                     handler(.success(mostPopularMovies))
+                    
                 } catch {
-                    handler(.failure(error))
+                    handler(.failure(MovieLoadingError.networkError(error)))
                 }
+                
             case .failure(let error):
                 if let urlError = error as? URLError, urlError.code == .notConnectedToInternet { print("Нет интернета")
                 }
@@ -34,3 +44,4 @@ struct MoviesLoader: MoviesLoading {
         }
     }
 }
+

@@ -2,35 +2,29 @@ import Foundation
 
 struct NetworkClient {
     
-    private enum NetworkError: Error {
-        case codeError
-    }
-    
     func fetch(url: URL, handler: @escaping (Result<Data, Error>) -> Void) {
         let request = URLRequest(url: url)
         
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             if let error = error {
                 if let urlError = error as? URLError {
-                    switch urlError.code {
-                    case .notConnectedToInternet:
-                        handler(.failure(urlError))
-                    default:
-                        handler(.failure(error))
-                    }
+                    handler(.failure(MovieLoadingError.networkError(urlError)))
                 } else {
-                    handler(.failure(error))
+                    handler(.failure(MovieLoadingError.networkError(error)))
                 }
                 return
             }
             
             if let response = response as? HTTPURLResponse,
-               response.statusCode < 200 || response.statusCode >= 300 {
-                handler(.failure(NetworkError.codeError))
+               !(200...300).contains(response.statusCode){
+                handler(.failure(MovieLoadingError.networkError(URLError (.badServerResponse))))
                 return
             }
             
-            guard let data = data else { return }
+            guard let data = data else {
+                handler(.failure(MovieLoadingError.networkError(URLError (.cannotParseResponse))))
+                return
+            }
             handler(.success(data))
         }
         

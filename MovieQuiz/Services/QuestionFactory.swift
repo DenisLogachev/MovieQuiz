@@ -1,7 +1,6 @@
 import Foundation
 
 final class QuestionFactory: QuestionFactoryProtocol {
-    //private var questions: [QuizQuestion] = []
     private var usedQuestions: Set<String> = []
     private var movies: [MostPopularMovie] = []
     private weak var delegate: QuestionFactoryDelegate?
@@ -26,6 +25,19 @@ final class QuestionFactory: QuestionFactoryProtocol {
             
             self.usedQuestions.insert(movie.id)
             
+            guard let _ = try? Data(contentsOf: movie.resizedImageURL) else {
+                DispatchQueue.main.async {
+                    let alertModel = AlertModel (
+                        title: "Ошибка",
+                        message:"Не удалось загрузить изображение фильма. Попробуйте позже.",
+                        buttonText: "ОК",
+                        completion: nil
+                    )
+                    self.delegate?.didFailToLoadData(with: MovieLoadingError.apiError("No image available"))
+                    self.delegate?.didReceiveNextQuestion(question: nil)
+                }
+                return
+            }
             
             URLSession.shared.dataTask(with:movie.resizedImageURL) {data, response, error in
                 guard let imageData = data, error == nil else {
@@ -40,13 +52,13 @@ final class QuestionFactory: QuestionFactoryProtocol {
                 let text: String
                 let correctAnswer: Bool
                 if isGreaterQuestion {
-                                text = "Рейтинг этого фильма больше чем \(randomRating)?"
-                                correctAnswer = rating > randomRating
-                            } else {
-                                text = "Рейтинг этого фильма меньше чем \(randomRating)?"
-                                correctAnswer = rating < randomRating
-                            }
-                            
+                    text = "Рейтинг этого фильма больше чем \(randomRating)?"
+                    correctAnswer = rating > randomRating
+                } else {
+                    text = "Рейтинг этого фильма меньше чем \(randomRating)?"
+                    correctAnswer = rating < randomRating
+                }
+                
                 let question = QuizQuestion(imageData: imageData,
                                             text: text,
                                             correctAnswer: correctAnswer)
@@ -79,51 +91,3 @@ final class QuestionFactory: QuestionFactoryProtocol {
         }
     }
 }
-
-//   func resetQuestions() {
-//        questions = [
-//            QuizQuestion(
-//                image: "The Godfather",
-//                text: "Рейтинг этого фильма больше чем 6?",
-//                correctAnswer: true),
-//            QuizQuestion(
-//                image: "The Dark Knight",
-//                text: "Рейтинг этого фильма больше чем 6?",
-//                correctAnswer: true),
-//            QuizQuestion(
-//                image: "Kill Bill",
-//                text: "Рейтинг этого фильма больше чем 6?",
-//                correctAnswer: true),
-//            QuizQuestion(
-//                image: "The Avengers",
-//                text: "Рейтинг этого фильма больше чем 6?",
-//                correctAnswer: true),
-//            QuizQuestion(
-//                image: "Deadpool",
-//                text: "Рейтинг этого фильма больше чем 6?",
-//                correctAnswer: true),
-//            QuizQuestion(
-//                image: "The Green Knight",
-//                text: "Рейтинг этого фильма больше чем 6?",
-//                correctAnswer: true),
-//            QuizQuestion(
-//                image: "Old",
-//                text: "Рейтинг этого фильма больше чем 6?",
-//                correctAnswer: false),
-//            QuizQuestion(
-//                image: "The Ice Age Adventures of Buck Wild",
-//                text: "Рейтинг этого фильма больше чем 6?",
-//                correctAnswer: false),
-//            QuizQuestion(
-//                image: "Tesla",
-//                text: "Рейтинг этого фильма больше чем 6?",
-//                correctAnswer: false),
-//            QuizQuestion(
-//                image: "Vivarium",
-//                text: "Рейтинг этого фильма больше чем 6?",
-//                correctAnswer: false)
-//        ].shuffled()
-//    }
-
-
-

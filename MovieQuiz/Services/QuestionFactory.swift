@@ -27,12 +27,6 @@ final class QuestionFactory: QuestionFactoryProtocol {
             
             guard let _ = try? Data(contentsOf: movie.resizedImageURL) else {
                 DispatchQueue.main.async {
-                    let alertModel = AlertModel (
-                        title: "Ошибка",
-                        message:"Не удалось загрузить изображение фильма. Попробуйте позже.",
-                        buttonText: "ОК",
-                        completion: nil
-                    )
                     self.delegate?.didFailToLoadData(with: MovieLoadingError.apiError("No image available"))
                     self.delegate?.didReceiveNextQuestion(question: nil)
                 }

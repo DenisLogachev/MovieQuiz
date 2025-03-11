@@ -10,9 +10,9 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     @IBOutlet weak private var activityIndicator: UIActivityIndicatorView!
     
     // MARK: - Properties
-    private var currentQuestionIndex = 0
+    //private var currentQuestionIndex = 1
     private var correctAnswers = 0
-    private let questionsAmount: Int = 10
+    //private let questionsAmount: Int = 10
     private let moviesLoader = MoviesLoader()
     private lazy var questionFactory: QuestionFactoryProtocol = {
         let factory = QuestionFactory(moviesLoader: moviesLoader, delegate: self)
@@ -22,6 +22,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     private lazy var statisticService: StatisticServiceProtocol = StatisticService()
     private let borderWidth: CGFloat = 8.0
     private let answerDelay:TimeInterval = 1.0
+    private let presenter = MovieQuizPresenter()
     
     // MARK: - Lifecycle
     override func viewDidLoad() {
@@ -45,8 +46,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         DispatchQueue.main.async { [weak self] in
             guard let self = self, let question = question else {return}
             self.currentQuestion = question
-            self.currentQuestionIndex += 1
-            let viewModel = self.convert(model: question, index: self.currentQuestionIndex)
+            let viewModel = presenter.convert(model: question)
             self.show(quiz: viewModel)
             self.setAnswerButtonsState(isEnabled: true)
         }
@@ -57,12 +57,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
         yesButton.isEnabled = isEnabled
         noButton.isEnabled = isEnabled
     }
-    private func convert(model: QuizQuestion, index: Int) -> QuizStepViewModel {
-        return QuizStepViewModel(
-            image: model.image ?? UIImage(),
-            question: model.text,
-            questionNumber: "\(index)/\(questionsAmount)")
-    }
+//    private func convert(model: QuizQuestion, index: Int) -> QuizStepViewModel {
+//        return QuizStepViewModel(
+//            image: model.image ?? UIImage(),
+//            question: model.text,
+//            questionNumber: "\(index)/\(questionsAmount)")
+//    }
     
     private func show(quiz step: QuizStepViewModel) {
         previewImage.layer.borderWidth = 0
@@ -91,12 +91,12 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
     }
     
     private func showNextQuestionOrResults() {
-        if currentQuestionIndex == questionsAmount - 1 {
-            statisticService.store(correct: correctAnswers, total: questionsAmount)
+        if presenter.isLastQuestion() {
+            statisticService.store(correct: correctAnswers, total: presenter.questionsAmount)
             let bestGame = statisticService.bestGame
             let totalAccuracy = String(format: "%.2f", statisticService.totalAccuracy)
             let resultMessage = """
-                    Ваш результат: \(correctAnswers)/\(questionsAmount)
+                    Ваш результат: \(correctAnswers)/\(presenter.questionsAmount)
                     Количество сыгранных квизов: \(statisticService.gamesCount)
                     Рекорд: \(bestGame.correct)/\(bestGame.total) (\(bestGame.date.dateTimeString))
                     Средняя точность: \(totalAccuracy)%
@@ -110,14 +110,14 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             
             show(quiz: result)
         } else {
-            currentQuestionIndex += 1
+            presenter.switchToNextQuestion()
             setAnswerButtonsState(isEnabled: true)
             questionFactory.requestNextQuestion()
         }
     }
     
     private func restartQuiz() {
-        currentQuestionIndex = 0
+        presenter.resetQuestionIndex()
         correctAnswers = 0
         previewImage.layer.borderWidth = 0
         questionFactory.requestNextQuestion()
@@ -172,7 +172,7 @@ final class MovieQuizViewController: UIViewController, QuestionFactoryDelegate {
             guard let self = self else { return }
             stopActivityIndicator()
             let message: String
-            if let urlError = error as? URLError {
+            if error is URLError {
                 message = "Проверьте подключение к интернету и попробуйте снова."
             } else if let movieError = error as? MovieLoadingError {
                 switch movieError {

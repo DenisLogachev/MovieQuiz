@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		920DE5DF2D818080006E5FBD /* MovieQuizControllerProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 920DE5DE2D81806B006E5FBD /* MovieQuizControllerProtocol.swift */; };
 		926746282D542A4D001C89C6 /* QuestionFactory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 926746272D542A4D001C89C6 /* QuestionFactory.swift */; };
 		9267462A2D542D41001C89C6 /* QuizStepViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 926746292D542D41001C89C6 /* QuizStepViewModel.swift */; };
 		9267462E2D542D5D001C89C6 /* QuizResultsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9267462D2D542D5D001C89C6 /* QuizResultsViewModel.swift */; };
@@ -54,6 +55,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		920DE5DE2D81806B006E5FBD /* MovieQuizControllerProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MovieQuizControllerProtocol.swift; sourceTree = "<group>"; };
 		926746272D542A4D001C89C6 /* QuestionFactory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuestionFactory.swift; sourceTree = "<group>"; };
 		926746292D542D41001C89C6 /* QuizStepViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizStepViewModel.swift; sourceTree = "<group>"; };
 		9267462D2D542D5D001C89C6 /* QuizResultsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuizResultsViewModel.swift; sourceTree = "<group>"; };
@@ -156,6 +158,7 @@
 		926746242D542888001C89C6 /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				920DE5DE2D81806B006E5FBD /* MovieQuizControllerProtocol.swift */,
 				926826122D79DD6900ABF4BE /* MovieLoadingError.swift */,
 				929319112D77358800528D65 /* MoviesLoader.swift */,
 				9293190D2D7731CB00528D65 /* NetworkClient.swift */,
@@ -392,6 +395,7 @@
 				929319122D77358E00528D65 /* MoviesLoader.swift in Sources */,
 				9267462A2D542D41001C89C6 /* QuizStepViewModel.swift in Sources */,
 				92AA40E02D5684FD0058B5B9 /* GameResult.swift in Sources */,
+				920DE5DF2D818080006E5FBD /* MovieQuizControllerProtocol.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
